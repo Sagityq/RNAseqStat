@@ -29,7 +29,7 @@
 #'                 genes_list = "top", highlight = NULL)
 enhance_volcano <- function(deg_data,x, y,
                             label = c("Down","Stable","Up"), label_ns = "Stable",
-                            palette = c('#66c2a5', 'grey50', '#fc8d62'),
+                            palette =  c("#2874C5", "grey", "#f87669"),
                             cut_FC = "auto", cut_P = 0.05, top = 10,size = 2.0,expand=c(0.25,0.25),
                             genes_list = "top", highlight = NULL) {
 
@@ -79,7 +79,8 @@ enhance_volcano <- function(deg_data,x, y,
 #' @noRd
 #' @examples
 #' enhance_volcano_plot(data,x = 'log2FoldChange', y = 'pvalue', cut_FC = 1, cut_P = 0.05)
-enhance_volcano_plot <- function(data,x,y,label = c("Down","Stable","Up"),cut_FC,cut_P, palette = c('#d53e4f', 'grey50', '#3288bd')) {
+enhance_volcano_plot <- function(data,x,y,label = c("Down","Stable","Up"),cut_FC,cut_P,
+                                 palette =  c("#2874C5", "grey", "#f87669")) {
 
   names(palette) <- label
 
@@ -91,11 +92,13 @@ enhance_volcano_plot <- function(data,x,y,label = c("Down","Stable","Up"),cut_FC
     cut_FC = cut_FC
   )
 
+  count_updown <- table(data$group)
+
   p <- ggplot(data=data, aes(x = get(x), y = -log10(get(y)), colour = group, alpha = group)) +
-    geom_point(aes(color = group),size = 0.5) +
+    geom_point(aes(color = group),size = 0.6) +
     geom_vline(data=FC_data, mapping=aes(xintercept=cut_FC),color = c(palette[label[1]],palette[label[3]]), linetype="longdash",size = 0.4) +
     geom_hline(aes(yintercept = -log10(cut_P)),color = palette[label[2]], linetype="longdash", size = 0.4) +
-    scale_alpha_manual(values = c(1,0.5,1),
+    scale_alpha_manual(values = c(0.6,0.5,0.6),
                        guide = "none")+
     scale_color_manual(
       values = palette,
@@ -105,9 +108,10 @@ enhance_volcano_plot <- function(data,x,y,label = c("Down","Stable","Up"),cut_FC
     ) +
     theme_nice() +
     labs(colour = "Group",x = "log2FoldChange", y = "-log10(PValue)",
-         caption = paste(sprintf('FDR:  %.3f\n', cut_P),
-                         sprintf('log 2 Fold Change: %.3f & %.3f \n',cut_FC,-cut_FC),
-                         sprintf('Total: %1.0f variables',nrow(data))
+         subtitle = paste(sprintf('%s:  %.3f;',y, cut_P),
+                         sprintf('FC: %.3f;',cut_FC),
+                         sprintf('Up: %1.0f; Down: %1.0f;',count_updown[3],count_updown[1]),
+                         sprintf('Total: %1.0f',nrow(data))
          ))
   return(p)
 }
@@ -133,7 +137,7 @@ show_genes <- function(data, x = "log2FoldChange", y = "pvalue", genes_list, hig
   max_lfc <- max(data[,x])
   min_lfc <- min(data[,x])
 
-  max_fdr <- max(-log10(data[,y]))
+  max_fdr <- max_fdr <- max(na.omit(-log10(data[,y])))
 
   if (max_fdr) {
     max_fdr <- 300
@@ -175,8 +179,9 @@ show_genes <- function(data, x = "log2FoldChange", y = "pvalue", genes_list, hig
         max.time = 10,
         nudge_x =  label_data[which(label_data[,x] > 0),][,x] + max_lfc+max_lfc/4,
         min.segment.length = 0,
-        bg.color = "#e0e0e0", # shadow color
-        bg.r = 0.15          # shadow radius
+        fontface = "bold",family = "Times"
+        # bg.color = "#e0e0e0", # shadow color
+        # bg.r = 0.15          # shadow radius
       ) +
       geom_text_repel(
         size = size,
@@ -192,8 +197,9 @@ show_genes <- function(data, x = "log2FoldChange", y = "pvalue", genes_list, hig
         max.time = 10,
         nudge_x =  label_data[which(label_data[,x] < 0),][,x] + min_lfc+min_lfc/4,
         min.segment.length = 0,
-        bg.color = "#e0e0e0", # shadow color
-        bg.r = 0.15          # shadow radius
+        fontface = "bold",family = "Times"
+        # bg.color = "#e0e0e0", # shadow color
+        # bg.r = 0.15          # shadow radius
       )
 
     if (!is.null(highlight)) {
@@ -215,8 +221,9 @@ show_genes <- function(data, x = "log2FoldChange", y = "pvalue", genes_list, hig
           max.time = 10,
           nudge_x =  hlight_data[which(hlight_data[,x] > 0),][,x] + max_lfc+max_lfc/4,
           min.segment.length = 0,
-          bg.color = "#26b1fb", # shadow color
-          bg.r = 0.15          # shadow radius
+          fontface = "bold",family = "Times"
+          # bg.color = "#26b1fb", # shadow color
+          # bg.r = 0.15          # shadow radius
         ) +
         geom_text_repel(
           size = size,
@@ -232,8 +239,9 @@ show_genes <- function(data, x = "log2FoldChange", y = "pvalue", genes_list, hig
           max.time = 10,
           nudge_x =  hlight_data[which(hlight_data[,x] > 0),][,x] + min_lfc+min_lfc/4,
           min.segment.length = 0,
-          bg.color = "#26b1fb", # shadow color
-          bg.r = 0.15          # shadow radius
+          fontface = "bold",family = "Times"
+          # bg.color = "#26b1fb", # shadow color
+          # bg.r = 0.15          # shadow radius
         )
 
     }
@@ -271,5 +279,5 @@ theme_nice <- function(...) {theme(...,
                                   legend.key = element_rect(fill = NA),
                                   legend.background = element_rect(fill = NA),
                                   legend.position = "top", legend.direction = "horizontal",
-                                  plot.caption = element_text(family = "Times", size = 6, face = "italic", colour = "dodgerblue"))}
+                                  plot.subtitle = element_text(hjust = 0.5,family = "Times", size = 6, face = "italic", colour = "black"))}
 
